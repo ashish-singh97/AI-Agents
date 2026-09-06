@@ -32,6 +32,7 @@ from flask import (
 from agent.email_generator import generate_email, load_template
 from agent.processor import RecruiterEmailProcessor
 from agent.validator import validate_record
+from agent.linkedin_parser import extract_recruiter_details
 from config.settings import get_settings
 from database.db import Database
 from database.models import ContactStatus, RecruiterRecord
@@ -40,7 +41,6 @@ from input.csv_writer import append_row, delete_row, ensure_csv_exists
 from providers.gmail import GmailProvider
 from utils.logger import get_logger
 from utils.rate_limiter import RateLimiter
-from utils.linkedin_parser import extract_recruiter_details
 
 settings = get_settings()
 logger = get_logger(settings.log_path)
@@ -82,10 +82,8 @@ def _build_processor(confirm_callback) -> RecruiterEmailProcessor:
         confirm_callback=confirm_callback,
     )
 
-@app.route("/")
-def index():
+def _build_rows():
     records = _load_records()
-
     rows = []
 
     for i, r in enumerate(records):
@@ -105,69 +103,50 @@ def index():
             }
         )
 
+    return rows
+
+@app.route("/")
+def index():
+    rows = _build_rows()
     stats = db.get_stats()
-
-    # Get extracted LinkedIn data, if available.
-    extracted = session.pop(
-        "extracted_recruiter",
-        None,
-    )
-
-    linkedin_post = session.pop(
-        "linkedin_post",
-        "",
-    )
 
     return render_template(
         "index.html",
         rows=rows,
         stats=stats,
         settings=settings,
-        extracted=extracted,
-        linkedin_post=linkedin_post,
+        extracted=None,
     )
 #Linkdin Parser route
 @app.route("/extract-linkedin", methods=["POST"])
 def extract_linkedin():
-    post = request.form.get("linkedin_post", "").strip()
+    linkedin_post = request.form.get("linkedin_post", "").strip()
 
-    if not post:
+    if not linkedin_post:
         flash("Please paste a LinkedIn job post.", "error")
         return redirect(url_for("index"))
 
     try:
-        extracted = extract_recruiter_details(post)
+        extracted = extract_recruiter_details(linkedin_post)
 
-        # Store extracted values in session so they can be displayed
-        # and edited in the UI.
-
-        session["extracted_recruiter"] = extracted
-        session["linkedin_post"] = post
-
-        missing = [
-            field
-            for field, value in extracted.items()
-            if field != "linkedin_url" and not value
-        ]
-
-        if missing:
-            flash(
-                "Post processed. Please review/fill missing fields: "
-                + ", ".join(missing),
-                "warning",
-            )
-        else:
-            flash(
-                "Recruiter details extracted successfully. "
-                "Please review them before adding.",
-                "success",
-            )
+        return render_template(
+            "index.html",
+            rows=_build_rows(),
+            stats=db.get_stats(),
+            settings=settings,
+            extracted={
+                "hr_name": extracted.hr_name or "",
+                "company": extracted.company or "",
+                "job_role": extracted.job_role or "",
+                "email": extracted.email or "",
+                "linkedin_post": linkedin_post,
+            },
+        )
 
     except Exception as exc:
         logger.exception("LinkedIn extraction failed")
         flash(f"Could not extract recruiter details: {exc}", "error")
-
-    return redirect(url_for("index"))
+        return redirect(url_for("index"))
 
 @app.route("/add", methods=["POST"])
 def add():

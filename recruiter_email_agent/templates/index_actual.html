@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recruiter Email Agent</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+  <div class="shell">
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="masthead">
+
+      <div>
+        <div class="title">
+          Outreach<span>Ledger</span>
+        </div>
+
+        <div class="subtitle">
+          Recruiter Email Agent — Local Console
+        </div>
+      </div>
+
+      <div class="stat-strip">
+
+        <div>
+          <b>{{ stats.total }}</b>
+          Logged
+        </div>
+
+        <div>
+          <b>{{ stats.SENT }}</b>
+          Sent
+        </div>
+
+        <div>
+          <b>{{ stats.sent_today }}</b>
+          Today
+        </div>
+
+        <div>
+          <b>{{ stats.FAILED }}</b>
+          Failed
+        </div>
+
+      </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         FLASH MESSAGES
+         ===================================================== -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+      {% if messages %}
+
+        {% for category, message in messages %}
+
+          <div class="flash {{ category }}">
+            {{ message }}
+          </div>
+
+        {% endfor %}
+
+      {% endif %}
+
+    {% endwith %}
+
+
+    <!-- =====================================================
+         LINKEDIN IMPORT
+         ===================================================== -->
+
+    <div class="panel">
+
+      <h2>Import from LinkedIn Post</h2>
+
+      <p style="margin-bottom: 16px; color: #666;">
+        Paste a LinkedIn job post below. The agent will automatically
+        extract the recruiter name, company, job role and email.
+        You can review and edit the details before adding them.
+      </p>
+
+      <form
+        method="POST"
+        action="{{ url_for('extract_linkedin') }}"
+      >
+
+        <div class="full">
+
+          <label for="linkedin_post">
+            LinkedIn Job Post
+          </label>
+
+          <textarea
+            id="linkedin_post"
+            name="linkedin_post"
+            rows="12"
+            placeholder="Paste the complete LinkedIn job post here..."
+            style="width: 100%; resize: vertical;"
+          >{{ linkedin_post or '' }}</textarea>
+
+        </div>
+
+        <div class="full" style="margin-top: 15px;">
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+          >
+            Extract Recruiter Details
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+
+    <!-- =====================================================
+         ADD RECRUITER
+         ===================================================== -->
+
+    <div class="panel">
+
+      <h2>Add Recruiter</h2>
+
+      <form
+        class="add-form"
+        method="POST"
+        action="{{ url_for('add') }}"
+      >
+
+        <!-- Recruiter Name -->
+
+        <div>
+
+          <label for="hr_name">
+            HR / Recruiter Name
+          </label>
+
+          <input
+            type="text"
+            id="hr_name"
+            name="hr_name"
+            placeholder="Priya Sharma"
+            value="{{ extracted.recruiter_name if extracted and extracted.recruiter_name else '' }}"
+            required
+          >
+
+        </div>
+
+
+        <!-- Company -->
+
+        <div>
+
+          <label for="company">
+            Company
+          </label>
+
+          <input
+            type="text"
+            id="company"
+            name="company"
+            placeholder="Google"
+            value="{{ extracted.company_name if extracted and extracted.company_name else '' }}"
+            required
+          >
+
+        </div>
+
+
+        <!-- Job Role -->
+
+        <div>
+
+          <label for="job_role">
+            Job Role
+          </label>
+
+          <input
+            type="text"
+            id="job_role"
+            name="job_role"
+            placeholder="Data Scientist"
+            value="{{ extracted.job_role if extracted and extracted.job_role else '' }}"
+            required
+          >
+
+        </div>
+
+
+        <!-- Email -->
+
+        <div>
+
+          <label for="email">
+            Recruiter Email
+          </label>
+
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="priya@google.com"
+            value="{{ extracted.recruiter_email if extracted and extracted.recruiter_email else '' }}"
+            required
+          >
+
+        </div>
+
+
+        <!-- LinkedIn URL -->
+
+        <div class="full">
+
+          <label for="linkedin_url">
+            LinkedIn Job URL (optional)
+          </label>
+
+          <input
+            type="url"
+            id="linkedin_url"
+            name="linkedin_url"
+            placeholder="https://www.linkedin.com/jobs/..."
+          >
+
+        </div>
+
+
+        <!-- Submit -->
+
+        <div class="full">
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+          >
+            Add to List
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+
+    <!-- =====================================================
+         RECRUITER LIST
+         ===================================================== -->
+
+    <div class="panel">
+
+      <h2>
+        Recruiter List —
+        {{ rows|length }}
+        row{{ 's' if rows|length != 1 else '' }}
+      </h2>
+
+      {% if rows %}
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th class="row-index">
+              #
+            </th>
+
+            <th>
+              HR Name
+            </th>
+
+            <th>
+              Company
+            </th>
+
+            <th>
+              Role
+            </th>
+
+            <th>
+              Email
+            </th>
+
+            <th>
+              Status
+            </th>
+
+            <th>
+              Actions
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          {% for row in rows %}
+
+          <tr>
+
+            <td class="row-index">
+              {{ row.index + 1 }}
+            </td>
+
+            <td>
+              {{ row.hr_name }}
+            </td>
+
+            <td>
+              {{ row.company }}
+            </td>
+
+            <td>
+              {{ row.job_role }}
+            </td>
+
+            <td>
+              {{ row.email }}
+            </td>
+
+            <td>
+
+              {% if row.status %}
+
+                <span class="badge {{ row.status }}">
+                  {{ row.status }}
+                </span>
+
+              {% else %}
+
+                <span class="badge new">
+                  NEW
+                </span>
+
+              {% endif %}
+
+            </td>
+
+            <td class="actions">
+
+              <a
+                class="btn btn-ghost"
+                href="{{ url_for('preview', row_index=row.index) }}"
+              >
+                Preview
+              </a>
+
+              <form
+                method="POST"
+                action="{{ url_for('delete', row_index=row.index) }}"
+                onsubmit="return confirm('Remove this recruiter from the list?');"
+              >
+
+                <button
+                  type="submit"
+                  class="btn btn-danger"
+                >
+                  Delete
+                </button>
+
+              </form>
+
+            </td>
+
+          </tr>
+
+          {% endfor %}
+
+        </tbody>
+
+      </table>
+
+      {% else %}
+
+      <div class="empty-state">
+        No recruiters added yet. Use the form above to add your first one.
+      </div>
+
+      {% endif %}
+
+    </div>
+
+  </div>
+
+</body>
+</html>

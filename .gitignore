@@ -26,3 +26,6 @@ logs/*.log
 
 # csv
 .csv
+
+# Ignore dependency folders
+models/
