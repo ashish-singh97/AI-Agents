@@ -1,0 +1,28 @@
+# Secrets / configuration
+.env
+credentials.json
+token.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# Data / runtime artifacts
+database/*.db
+logs/*.log
+*.log
+
+# OS
+.DS_Store
+
+# Resume (personal file, don't commit)
+*.pdf
+
+# csv
+.csv

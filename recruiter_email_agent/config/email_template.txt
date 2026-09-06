@@ -1,0 +1,16 @@
+Subject: Application for {JOB_ROLE} – {YOUR_NAME}
+
+Hi {HR_NAME},
+
+I came across the {JOB_ROLE} opportunity at {COMPANY_NAME} and I'm interested in exploring the role.
+
+I have 3+ years of experience in Data Science, Machine Learning, and Generative AI, Python, SQL, with hands-on experience in building ML models, LLM/RAG applications, AI agents, and data solutions.
+
+Please find my resume attached for your reference. I would appreciate it if you could consider my profile for this opportunity.
+
+Looking forward to hearing from you.
+
+Best Regards,
+Ashish Singh
+M: 9721422214
+Linkdin: linkedin.com/in/ashish-singh-13364121b
