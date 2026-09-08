@@ -17,6 +17,8 @@ env/
 database/*.db
 logs/*.log
 *.log
+models/
+uploads/
 
 # OS
 .DS_Store
@@ -28,4 +30,3 @@ logs/*.log
 .csv
 
 # Ignore dependency folders
-models/

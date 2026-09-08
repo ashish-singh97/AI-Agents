@@ -12,7 +12,7 @@ content="width=device-width, initial-scale=1.0"
 
 >
 
-  <title>Recruiter Email Agent</title>
+  <title>ApplyPilot — AI-Powered Recruiter Outreach</title>
 
   <link
     rel="stylesheet"
@@ -35,11 +35,11 @@ content="width=device-width, initial-scale=1.0"
   <div>
 
     <div class="title">
-      Outreach<span>Ledger</span>
+      Apply<span>Pilot</span>
     </div>
 
     <div class="subtitle">
-      Recruiter Email Agent — Local Console
+      AI-Powered Recruiter Outreach
     </div>
 
   </div>
@@ -92,6 +92,93 @@ content="width=device-width, initial-scale=1.0"
 
 {% endwith %}
 
+<!-- =====================================================
+     RESUME
+     ===================================================== -->
+
+<div class="panel">
+
+  <h2>Your Resume</h2>
+
+  <form
+    method="POST"
+    action="{{ url_for('upload_resume') }}"
+    enctype="multipart/form-data"
+    class="resume-form"
+  >
+
+    <input
+      type="file"
+      id="resume"
+      name="resume"
+      accept=".pdf,.doc,.docx"
+      onchange="this.form.submit()"
+      hidden
+    >
+
+
+    {% if resume_path %}
+
+      <div class="resume-current">
+
+        <div class="resume-info">
+
+          <div class="resume-icon">
+            CV
+          </div>
+
+          <div>
+
+            <div class="resume-name">
+              {{ resume_name }}
+            </div>
+
+            <div class="resume-status">
+              ✓ Ready to attach to emails
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <label
+          for="resume"
+          class="btn btn-ghost"
+        >
+          Replace Resume
+        </label>
+
+      </div>
+
+    {% else %}
+
+      <div class="resume-empty">
+
+        <div class="resume-empty-title">
+          No resume uploaded
+        </div>
+
+        <div class="resume-empty-text">
+          Upload your resume to automatically attach it
+          to every email you send.
+        </div>
+
+
+        <label
+          for="resume"
+          class="btn btn-primary"
+        >
+          Upload Resume
+        </label>
+
+      </div>
+
+    {% endif %}
+
+  </form>
+
+</div>
 
 <!-- =====================================================
      ADD RECRUITER
@@ -538,16 +625,8 @@ content="width=device-width, initial-scale=1.0"
      * Manual Entry opens with populated fields
      */
 
-    {% if extracted %}
-
-      showManual();
-
-    {% else %}
-
-      showManual();
-
-    {% endif %}
-
+// Show Manual Entry by default
+    showManual();
   </script>
 
 </body>

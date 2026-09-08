@@ -16,6 +16,7 @@ Then open http://127.0.0.1:5000 in your browser.
 from __future__ import annotations
 
 from pathlib import Path
+from uuid import uuid4
 
 # from flask import Flask, flash, redirect, render_template, request, url_for
 #added
@@ -28,6 +29,7 @@ from flask import (
     session,
     url_for,
 )
+from werkzeug.utils import secure_filename
 
 from agent.email_generator import generate_email, load_template
 from agent.processor import RecruiterEmailProcessor
@@ -50,6 +52,11 @@ ensure_csv_exists(settings.recruiters_csv_path)
 app = Flask(__name__)
 app.secret_key = "recruiter-email-agent-local-ui"  # local single-user tool; not internet-facing
 
+# Resume upload directory
+RESUME_UPLOAD_DIR = Path("uploads") / "resumes"
+RESUME_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+ALLOWED_RESUME_EXTENSIONS = {".pdf", ".doc", ".docx"}
+MAX_RESUME_SIZE = 10 * 1024 * 1024  # 10 MB
 
 def _load_records() -> list[RecruiterRecord]:
     try:
@@ -57,8 +64,28 @@ def _load_records() -> list[RecruiterRecord]:
     except Exception:
         return []
 
+def _get_user_resume_path():
+    """
+    Return the resume path associated with the current browser session.
 
-def _build_processor(confirm_callback) -> RecruiterEmailProcessor:
+    If the user has not uploaded a resume, fall back to the configured
+    resume path from settings.
+    """
+    uploaded_resume = session.get("resume_path")
+
+    if uploaded_resume:
+        resume_path = Path(uploaded_resume)
+
+        if resume_path.exists():
+            return str(resume_path)
+
+    # Fallback to existing configured resume
+    if settings.resume_path and Path(settings.resume_path).exists():
+        return settings.resume_path
+
+    return None
+
+def _build_processor(confirm_callback, resume_path=None) -> RecruiterEmailProcessor:
     rate_limiter = RateLimiter(
         min_delay_seconds=settings.min_delay_seconds,
         max_delay_seconds=settings.max_delay_seconds,
@@ -76,7 +103,7 @@ def _build_processor(confirm_callback) -> RecruiterEmailProcessor:
         logger=logger,
         template_path=str(settings.email_template_path),
         sender_name=settings.sender_name,
-        resume_path=settings.resume_path,
+        resume_path=resume_path or settings.resume_path,
         auto_send=False,  # always require the explicit UI confirm step
         dry_run=False,
         confirm_callback=confirm_callback,
@@ -110,12 +137,21 @@ def index():
     rows = _build_rows()
     stats = db.get_stats()
 
+    resume_path = _get_user_resume_path()
+
+    resume_name = None
+
+    if resume_path:
+        resume_name = Path(resume_path).name
+
     return render_template(
         "index.html",
         rows=rows,
         stats=stats,
         settings=settings,
         extracted=None,
+        resume_path=resume_path,
+        resume_name=resume_name,
     )
 #Linkdin Parser route
 @app.route("/extract-linkedin", methods=["POST"])
@@ -147,6 +183,72 @@ def extract_linkedin():
         logger.exception("LinkedIn extraction failed")
         flash(f"Could not extract recruiter details: {exc}", "error")
         return redirect(url_for("index"))
+
+@app.route("/upload-resume", methods=["POST"])
+def upload_resume():
+    resume = request.files.get("resume")
+
+    if not resume or not resume.filename:
+        flash("Please select a resume file.", "error")
+        return redirect(url_for("index"))
+
+    # Preserve the user's uploaded filename safely
+    original_filename = secure_filename(resume.filename)
+
+    if not original_filename:
+        flash("Invalid resume filename.", "error")
+        return redirect(url_for("index"))
+
+    extension = Path(original_filename).suffix.lower()
+
+    if extension not in ALLOWED_RESUME_EXTENSIONS:
+        flash(
+            "Invalid file type. Please upload PDF, DOC, or DOCX.",
+            "error",
+        )
+        return redirect(url_for("index"))
+
+    # Check file size
+    resume.stream.seek(0, 2)
+    file_size = resume.stream.tell()
+    resume.stream.seek(0)
+
+    if file_size > MAX_RESUME_SIZE:
+        flash("Resume must be smaller than 10 MB.", "error")
+        return redirect(url_for("index"))
+
+    # Create unique folder for this browser session
+    user_id = session.get("user_id")
+
+    if not user_id:
+        user_id = uuid4().hex
+        session["user_id"] = user_id
+
+    user_resume_dir = RESUME_UPLOAD_DIR / user_id
+    user_resume_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove previous resume
+    for old_file in user_resume_dir.iterdir():
+        if old_file.is_file():
+            old_file.unlink()
+
+    # Keep the original uploaded filename
+    resume_path = user_resume_dir / original_filename
+
+    resume.save(resume_path)
+
+    # Store actual path in session
+    session["resume_path"] = str(resume_path)
+
+    # Store filename separately for displaying in UI
+    session["resume_name"] = original_filename
+
+    flash(
+        f"Resume uploaded successfully: {original_filename}",
+        "success",
+    )
+
+    return redirect(url_for("index"))
 
 @app.route("/add", methods=["POST"])
 def add():
@@ -191,7 +293,9 @@ def preview(row_index: int):
     generated = generate_email(record, template_text, settings.sender_name)
 
     already_sent = db.get_latest_status(record.email) == ContactStatus.SENT.value
-    resume_exists = bool(settings.resume_path) and Path(settings.resume_path).exists()
+    # resume_exists = bool(settings.resume_path) and Path(settings.resume_path).exists()
+    resume_path = _get_user_resume_path()
+    resume_exists = bool(resume_path) and Path(resume_path).exists()
 
     return render_template(
         "preview.html",
@@ -201,7 +305,8 @@ def preview(row_index: int):
         body=generated.body,
         already_sent=already_sent,
         resume_exists=resume_exists,
-        resume_path=settings.resume_path,
+        # resume_path=settings.resume_path,
+        resume_path=resume_path,
     )
 
 
@@ -214,9 +319,20 @@ def send(row_index: int):
 
     record = records[row_index]
 
+    resume_path = _get_user_resume_path()
+
+    if not resume_path:
+        flash(
+        "No resume available. Please upload a resume first.",
+        "error",
+        )
+        return redirect(url_for("index"))
     # Clicking "Confirm & Send" on the preview page IS the explicit approval,
     # so the processor's confirm step just returns True here.
-    processor = _build_processor(confirm_callback=lambda preview_text: True)
+    processor = _build_processor(
+    confirm_callback=lambda preview_text: True,
+    resume_path=resume_path,
+        )
     result = processor.process_one(record, preview_only=False)
 
     if result.status == ContactStatus.SENT:
@@ -230,4 +346,9 @@ def send(row_index: int):
 
 
 if __name__ == "__main__":
-    app.run(host=settings.web_ui_host, port=settings.web_ui_port, debug=False)
+    app.run(
+        host=settings.web_ui_host,
+        port=settings.web_ui_port,
+        debug=True,
+        use_reloader=True,
+    )

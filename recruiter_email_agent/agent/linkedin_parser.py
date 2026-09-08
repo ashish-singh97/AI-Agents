@@ -165,8 +165,48 @@ def extract_recruiter_details(
     # Limit unnecessary context
     linkedin_post = linkedin_post[:12000]
 
+#     system_prompt = """
+# You are a LinkedIn job-post information extraction system.
+
+# DO NOT EXPLAIN YOUR ANSWER.
+# DO NOT PROVIDE REASONING.
+# DO NOT THINK ALOUD.
+
+# Extract ONLY these four fields:
+
+# 1. hr_name
+# 2. job_role
+# 3. company
+# 4. email
+
+# RULES:
+
+# - Extract only information explicitly present in the post.
+# - Never guess.
+# - Missing information must be null.
+# - Never confuse a location with a job role.
+# - Never confuse skills with a job role.
+# - Extract the complete job title.
+# - Extract the company actually hiring.
+# - Extract HR/recruiter name only when clearly associated with recruitment.
+# - Email must explicitly appear in the post.
+# - Never invent an email.
+# - Ignore hashtags and URLs.
+
+# Return ONLY valid JSON.
+
+# Required format:
+
+# {
+#   "hr_name": null,
+#   "job_role": null,
+#   "company": null,
+#   "email": null
+# }
+# """
+
     system_prompt = """
-You are a LinkedIn job-post information extraction system.
+    You are a LinkedIn job-post information extraction system.
 
 DO NOT EXPLAIN YOUR ANSWER.
 DO NOT PROVIDE REASONING.
@@ -179,24 +219,27 @@ Extract ONLY these four fields:
 3. company
 4. email
 
-RULES:
-
-- Extract only information explicitly present in the post.
-- Never guess.
-- Missing information must be null.
-- Never confuse a location with a job role.
-- Never confuse skills with a job role.
-- Extract the complete job title.
-- Extract the company actually hiring.
-- Extract HR/recruiter name only when clearly associated with recruitment.
-- Email must explicitly appear in the post.
-- Never invent an email.
+Rules:
+- Return ONLY valid JSON. No explanation or reasoning.
+- Missing information = null.
+- Never invent information.
+- hr_name: extract ONLY the recruiter's FIRST NAME.
+- First use an explicitly mentioned recruiter/HR/hiring contact.
+- If no name is mentioned, infer ONLY the first name from a clearly personal email.
+- Never guess or add a surname.
+- Examples: priya.sharma@abc.com → "Priya"; isha.a@idfcbank.com → "Isha".
+- Generic emails like careers@, hr@, jobs@, hiring@, recruitment@, info@, contact@ → hr_name = null.
+- job_role: extract the complete advertised job title. Never use location or skills.
+- company: extract the company actually hiring.
+- Preserve the company's correct official capitalization and spacing.
+- Correct obvious capitalization/spacing errors in company names.
+  Example: "IDFcbank" → "IDFC Bank", "accenture" → "Accenture".
+- Do not change the actual company name or invent a different company.
+- email: extract the email exactly as written. Never create or modify it.
 - Ignore hashtags and URLs.
 
-Return ONLY valid JSON.
 
-Required format:
-
+Output:
 {
   "hr_name": null,
   "job_role": null,
@@ -204,7 +247,6 @@ Required format:
   "email": null
 }
 """
-
     user_prompt = f"""
 Extract the information from this LinkedIn job post.
 

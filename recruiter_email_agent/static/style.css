@@ -283,3 +283,87 @@ tr:last-child td { border-bottom: none; }
   gap: 10px;
   margin-top: 20px;
 }
+
+/* =====================================================
+   RESUME UPLOAD
+   ===================================================== */
+
+.resume-upload-section {
+  width: 100%;
+}
+
+.resume-form {
+  width: 100%;
+}
+
+.resume-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.resume-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resume-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-dim);
+  color: var(--amber-dark);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.resume-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.resume-status {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--sent);
+}
+
+.resume-empty {
+  padding: 22px;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  text-align: center;
+  background: #fff;
+}
+
+.resume-empty-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.resume-empty-text {
+  font-size: 12px;
+  color: #6B6255;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.resume-form label {
+  cursor: pointer;
+}
