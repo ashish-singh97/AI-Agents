@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>ApplyPilot — AI-Powered Recruiter Outreach</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+  <div class="shell">
+
+    <!-- =====================================================
+     HEADER
+     ===================================================== -->
+
+    <header class="masthead">
+
+      <div>
+
+        <div class="title">
+          Apply<span>Pilot</span>
+        </div>
+
+        <div class="subtitle">
+          AI-Powered Recruiter Outreach
+        </div>
+
+      </div>
+
+
+      <div class="stat-strip">
+
+        <div>
+          <b>{{ stats.total }}</b>
+          Logged
+        </div>
+
+        <div>
+          <b>{{ stats.SENT }}</b>
+          Sent
+        </div>
+
+        <div>
+          <b>{{ stats.sent_today }}</b>
+          Today
+        </div>
+
+        <div>
+          <b>{{ stats.FAILED }}</b>
+          Failed
+        </div>
+
+      </div>
+
+    </header>
+
+
+    <!-- =====================================================
+     FLASH MESSAGES
+     ===================================================== -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+    {% for category, message in messages %}
+
+    <div class="flash {{ category }}">
+      {{ message }}
+    </div>
+
+    {% endfor %}
+
+    {% endif %}
+
+    {% endwith %}
+
+    <!-- =====================================================
+     RESUME
+     ===================================================== -->
+
+    <div class="panel">
+
+      <h2>Your Resume</h2>
+
+      <form method="POST" action="{{ url_for('upload_resume') }}" enctype="multipart/form-data" class="resume-form">
+
+        <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" onchange="this.form.submit()" hidden>
+
+
+        {% if resume_path %}
+
+        <div class="resume-current">
+
+          <div class="resume-info">
+
+            <div class="resume-icon">
+              CV
+            </div>
+
+            <div>
+
+              <div class="resume-name">
+                {{ resume_name }}
+              </div>
+
+              <div class="resume-status">
+                ✓ Ready to attach to emails
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <label for="resume" class="btn btn-ghost">
+            Replace Resume
+          </label>
+
+        </div>
+
+        {% else %}
+
+        <div class="resume-empty">
+
+          <div class="resume-empty-title">
+            No resume uploaded
+          </div>
+
+          <div class="resume-empty-text">
+            Upload your resume to automatically attach it
+            to every email you send.
+          </div>
+
+
+          <label for="resume" class="btn btn-primary">
+            Upload Resume
+          </label>
+
+        </div>
+
+        {% endif %}
+
+      </form>
+
+    </div>
+
+    <!-- =====================================================
+     ADD RECRUITER
+     ===================================================== -->
+
+    <div class="panel">
+
+      <h2>Add Recruiter</h2>
+
+
+      <!-- =================================================
+       ENTRY MODE BUTTONS
+       ================================================= -->
+
+      <div class="entry-mode">
+
+        <button type="button" id="manual-btn" class="btn btn-primary" onclick="showManual()">
+          Manual Entry
+        </button>
+
+
+        <button type="button" id="linkedin-btn" class="btn btn-ghost" onclick="showLinkedIn()">
+          Extract from LinkedIn
+        </button>
+
+      </div>
+
+
+      <!-- =================================================
+       MANUAL ENTRY
+       ================================================= -->
+
+      <div id="manual-entry">
+
+        <form class="add-form" method="POST" action="{{ url_for('add') }}">
+
+
+          <!-- Recruiter Name -->
+
+          <div>
+
+            <label for="hr_name">
+              HR / Recruiter Name
+            </label>
+
+            <input type="text" id="hr_name" name="hr_name" placeholder="Priya Sharma"
+              value="{{ extracted.hr_name if extracted else '' }}" required>
+
+          </div>
+
+
+          <!-- Company -->
+
+          <div>
+
+            <label for="company">
+              Company
+            </label>
+
+            <input type="text" id="company" name="company" placeholder="Google"
+              value="{{ extracted.company if extracted else '' }}" required>
+
+          </div>
+
+
+          <!-- Job Role -->
+
+          <div>
+
+            <label for="job_role">
+              Job Role
+            </label>
+
+            <input type="text" id="job_role" name="job_role" placeholder="Data Scientist"
+              value="{{ extracted.job_role if extracted else '' }}" required>
+
+          </div>
+
+
+          <!-- Email -->
+
+          <div>
+
+            <label for="email">
+              Recruiter Email
+            </label>
+
+            <input type="email" id="email" name="email" placeholder="priya@google.com"
+              value="{{ extracted.email if extracted else '' }}" required>
+
+          </div>
+
+
+          <!-- LinkedIn URL -->
+
+          <div class="full">
+
+            <label for="linkedin_url">
+              LinkedIn URL
+            </label>
+
+            <input type="url" id="linkedin_url" name="linkedin_url" placeholder="https://www.linkedin.com/jobs/..."
+              value="{{ extracted.linkedin_url if extracted and extracted.linkedin_url else '' }}">
+
+          </div>
+
+
+          <!-- Submit -->
+
+          <div class="full">
+
+            <button type="submit" class="btn btn-primary">
+              Add Recruiter
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+
+      <!-- =================================================
+       LINKEDIN EXTRACTION
+       ================================================= -->
+
+      <div id="linkedin-entry" style="display: none;">
+
+        <p style="margin-bottom: 16px; color: #666;">
+          Paste a LinkedIn job post below. The agent will
+          automatically extract the recruiter name, company,
+          job role and email.
+        </p>
+
+
+        <form method="POST" action="{{ url_for('extract_linkedin') }}">
+
+
+          <!-- LinkedIn Post -->
+
+          <div class="full">
+
+            <label for="linkedin_post">
+              LinkedIn Job Post
+            </label>
+
+            <textarea id="linkedin_post" name="linkedin_post" rows="12"
+              placeholder="Paste the complete LinkedIn job post here..."
+              required>{{ extracted.linkedin_post if extracted else '' }}</textarea>
+
+          </div>
+
+
+          <!-- Extract -->
+
+          <div class="full" style="margin-top: 15px;">
+
+            <button type="submit" class="btn btn-primary">
+              Extract Recruiter Details
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+     RECRUITER LIST
+     ===================================================== -->
+
+    <div class="panel">
+
+      <h2>
+
+        Recruiter List —
+        {{ rows|length }}
+        row{{ 's' if rows|length != 1 else '' }}
+
+      </h2>
+
+
+      {% if rows %}
+
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th class="row-index">
+              #
+            </th>
+
+            <th>
+              HR Name
+            </th>
+
+            <th>
+              Company
+            </th>
+
+            <th>
+              Role
+            </th>
+
+            <th>
+              Email
+            </th>
+
+            <th>
+              Status
+            </th>
+
+            <th>
+              Actions
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          {% for row in rows %}
+
+          <tr>
+
+            <td class="row-index">
+              {{ row.index + 1 }}
+            </td>
+
+
+            <td>
+              {{ row.hr_name }}
+            </td>
+
+
+            <td>
+              {{ row.company }}
+            </td>
+
+
+            <td>
+              {{ row.job_role }}
+            </td>
+
+
+            <td>
+              {{ row.email }}
+            </td>
+
+
+            <td>
+
+              {% if row.status %}
+
+              <span class="badge {{ row.status }}">
+                {{ row.status }}
+              </span>
+
+              {% else %}
+
+              <span class="badge new">
+                NEW
+              </span>
+
+              {% endif %}
+
+            </td>
+
+
+            <td class="actions">
+
+              <a class="btn btn-ghost" href="{{ url_for('preview', row_index=row.index) }}">
+                Preview
+              </a>
+
+
+              <form method="POST" action="{{ url_for('delete', row_index=row.index) }}"
+                onsubmit="return confirm('Remove this recruiter from the list?');">
+
+                <button type="submit" class="btn btn-danger">
+                  Delete
+                </button>
+
+              </form>
+
+            </td>
+
+          </tr>
+
+          {% endfor %}
+
+        </tbody>
+
+      </table>
+
+
+      {% else %}
+
+
+      <div class="empty-state">
+
+        No recruiters added yet. Use the form above to add your
+        first one.
+
+      </div>
+
+
+      {% endif %}
+
+    </div>
+
+  </div>
+
+  <!-- =====================================================
+       JAVASCRIPT
+       ===================================================== -->
+
+  <script>
+
+    function showManual() {
+
+      document.getElementById("manual-entry").style.display = "block";
+
+      document.getElementById("linkedin-entry").style.display = "none";
+
+      document.getElementById("manual-btn").classList.add("btn-primary");
+
+      document.getElementById("manual-btn").classList.remove("btn-ghost");
+
+      document.getElementById("linkedin-btn").classList.add("btn-ghost");
+
+      document.getElementById("linkedin-btn").classList.remove("btn-primary");
+
+    }
+
+
+    function showLinkedIn() {
+
+      document.getElementById("manual-entry").style.display = "none";
+
+      document.getElementById("linkedin-entry").style.display = "block";
+
+      document.getElementById("linkedin-btn").classList.add("btn-primary");
+
+      document.getElementById("linkedin-btn").classList.remove("btn-ghost");
+
+      document.getElementById("manual-btn").classList.add("btn-ghost");
+
+      document.getElementById("manual-btn").classList.remove("btn-primary");
+
+    }
+
+
+    /*
+     * If Flask returned extracted recruiter details,
+     * automatically show the Manual Entry form.
+     *
+     * This means:
+     *
+     * LinkedIn Post
+     *      ↓
+     * Extract
+     *      ↓
+     * Manual Entry opens with populated fields
+     */
+
+    // Show Manual Entry by default
+    showManual();
+  </script>
+
+</body>
+
+</html>

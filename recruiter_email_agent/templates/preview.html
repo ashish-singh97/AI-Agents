@@ -3,49 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Preview — {{ record.hr_name }}</title>
+  <title>Preview Outreach — {{ record.hr_name }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="shell">
+  <div class="preview-shell">
+    <!-- Header with Back Button -->
     <header class="masthead">
-      <div>
-        <div class="title">Outreach<span>Ledger</span></div>
-        <div class="subtitle">Email Preview</div>
+      <div class="brand-wrapper">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="m22 2-7 20-4-9-9-4Z"/>
+            <path d="M22 2 11 13"/>
+          </svg>
+        </div>
+        <div class="title-area">
+          <div class="title-row">
+            <h1 class="title">Apply<span>Pilot</span></h1>
+            <span class="pro-badge">INSPECTOR</span>
+          </div>
+          <p class="subtitle">Outreach Preview &amp; Dispatch</p>
+        </div>
       </div>
+
+      <a class="back-link" href="{{ url_for('index') }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Dashboard
+      </a>
     </header>
 
-    <a class="back-link" href="{{ url_for('index') }}">&larr; Back to list</a>
+    <!-- Warnings / Pre-flight Checks -->
+    {% if already_sent %}
+      <div class="warning-banner duplicate">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <div>
+          <strong style="display:block; margin-bottom:2px;">Duplicate Send Prevention Activated</strong>
+          This recruiter's email address already has a <code>SENT</code> record. Sending again is blocked by duplicate detection — remove the existing record first if you explicitly intend to re-contact them.
+        </div>
+      </div>
+    {% endif %}
 
+    {% if not resume_exists %}
+      <div class="warning-banner missing-resume">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <div>
+          <strong style="display:block; margin-bottom:2px;">Resume File Missing</strong>
+          Resume not found at <code>{{ resume_path or '(not configured)' }}</code>. Sending will fail until a valid file is uploaded in your settings or dashboard.
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Email Inspector Panel -->
     <div class="panel">
-      {% if already_sent %}
-        <div class="warning-note">
-          This recruiter's email address already has a SENT record. Sending again is blocked by duplicate detection — remove the existing database row first if you really intend to re-contact them.
-        </div>
-      {% endif %}
-
-      {% if not resume_exists %}
-        <div class="warning-note">
-          Resume not found at <code>{{ resume_path or '(not configured)' }}</code>. Sending will fail until RESUME_PATH in your .env points to a file that exists.
-        </div>
-      {% endif %}
-
-      <h2>Email Preview</h2>
-      <div class="email-preview-box">
-        <div class="to-line"><b>To:</b> {{ record.email }}</div>
-        <div class="subject-line"><b>Subject:</b> {{ subject }}</div>
-        <div class="divider"></div>
-        {{ body }}
+      <div class="panel-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          Email Draft Inspector
+        </h2>
+        <span class="panel-header-badge">Recipient: {{ record.hr_name }}</span>
       </div>
 
-      <div class="confirm-bar">
-        <form method="POST" action="{{ url_for('send', row_index=row_index) }}"
-              onsubmit="return confirm('Send this email now?');">
+      <div class="email-inspector-card">
+        <div class="inspector-meta">
+          <div class="meta-row">
+            <span class="meta-label">TO:</span>
+            <span class="meta-value">{{ record.email }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">SUBJECT:</span>
+            <span class="meta-value" style="font-weight:600;">{{ subject }}</span>
+          </div>
+        </div>
+
+        <div class="email-body-content">{{ body }}</div>
+      </div>
+
+      <div class="preview-action-footer">
+        <a class="btn btn-ghost" href="{{ url_for('index') }}">
+          Cancel &amp; Return
+        </a>
+        <form method="POST" action="{{ url_for('send', row_index=row_index) }}" onsubmit="return confirm('Send this cold outreach email to {{ record.hr_name }} ({{ record.email }}) now?');" style="display:inline;">
           <button type="submit" class="btn btn-send" {% if already_sent or not resume_exists %}disabled{% endif %}>
-            Confirm &amp; Send
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            Confirm &amp; Send Outreach Email
           </button>
         </form>
-        <a class="btn btn-ghost" href="{{ url_for('index') }}">Cancel</a>
       </div>
     </div>
   </div>

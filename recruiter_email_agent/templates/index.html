@@ -1,634 +1,373 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8">
-
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
-
->
-
-  <title>ApplyPilot — AI-Powered Recruiter Outreach</title>
-
-  <link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='style.css') }}"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApplyPilot — Autonomous Recruiter Outreach</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
-
   <div class="shell">
-
-```
-<!-- =====================================================
-     HEADER
-     ===================================================== -->
-
-<header class="masthead">
-
-  <div>
-
-    <div class="title">
-      Apply<span>Pilot</span>
-    </div>
-
-    <div class="subtitle">
-      AI-Powered Recruiter Outreach
-    </div>
-
-  </div>
-
-
-  <div class="stat-strip">
-
-    <div>
-      <b>{{ stats.total }}</b>
-      Logged
-    </div>
-
-    <div>
-      <b>{{ stats.SENT }}</b>
-      Sent
-    </div>
-
-    <div>
-      <b>{{ stats.sent_today }}</b>
-      Today
-    </div>
-
-    <div>
-      <b>{{ stats.FAILED }}</b>
-      Failed
-    </div>
-
-  </div>
-
-</header>
-
-
-<!-- =====================================================
-     FLASH MESSAGES
-     ===================================================== -->
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-
-  {% if messages %}
-
-    {% for category, message in messages %}
-
-      <div class="flash {{ category }}">
-        {{ message }}
-      </div>
-
-    {% endfor %}
-
-  {% endif %}
-
-{% endwith %}
-
-<!-- =====================================================
-     RESUME
-     ===================================================== -->
-
-<div class="panel">
-
-  <h2>Your Resume</h2>
-
-  <form
-    method="POST"
-    action="{{ url_for('upload_resume') }}"
-    enctype="multipart/form-data"
-    class="resume-form"
-  >
-
-    <input
-      type="file"
-      id="resume"
-      name="resume"
-      accept=".pdf,.doc,.docx"
-      onchange="this.form.submit()"
-      hidden
-    >
-
-
-    {% if resume_path %}
-
-      <div class="resume-current">
-
-        <div class="resume-info">
-
-          <div class="resume-icon">
-            CV
+    <!-- =====================================================
+         HEADER & MASTHEAD
+         ===================================================== -->
+    <header class="masthead">
+      <div class="brand-wrapper">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="m22 2-7 20-4-9-9-4Z"/>
+            <path d="M22 2 11 13"/>
+          </svg>
+        </div>
+        <div class="title-area">
+          <div class="title-row">
+            <h1 class="title">Apply<span>Pilot</span></h1>
+            <span class="pro-badge">PRO COPILOT</span>
           </div>
+          <p class="subtitle">Autonomous Recruiter Outreach &amp; Cold Email Engine</p>
+        </div>
+      </div>
 
-          <div>
+      <div class="stat-strip">
+        <div class="stat-card">
+          <span class="stat-label"><span class="stat-label-dot"></span>Logged</span>
+          <span class="stat-value">{{ stats.total }}</span>
+        </div>
+        <div class="stat-card sent">
+          <span class="stat-label"><span class="stat-label-dot"></span>Sent</span>
+          <span class="stat-value">{{ stats.SENT }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label"><span class="stat-label-dot"></span>Today</span>
+          <span class="stat-value">{{ stats.sent_today }}</span>
+        </div>
+        <div class="stat-card failed">
+          <span class="stat-label"><span class="stat-label-dot"></span>Failed</span>
+          <span class="stat-value">{{ stats.FAILED }}</span>
+        </div>
+      </div>
+    </header>
 
-            <div class="resume-name">
-              {{ resume_name }}
-            </div>
-
-            <div class="resume-status">
-              ✓ Ready to attach to emails
-            </div>
-
+    <!-- =====================================================
+         FLASH MESSAGES
+         ===================================================== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              {% if category == 'success' %}
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              {% else %}
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              {% endif %}
+            </svg>
+            <span>{{ message }}</span>
           </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
+    <!-- =====================================================
+         TWO-COLUMN DASHBOARD GRID
+         ===================================================== -->
+    <div class="dashboard-grid">
+      <!-- Left Column: Resume Attachment Card -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Active Resume
+          </h2>
+          <span class="panel-header-badge">PDF / DOCX</span>
         </div>
 
-
-        <label
-          for="resume"
-          class="btn btn-ghost"
-        >
-          Replace Resume
-        </label>
-
-      </div>
-
-    {% else %}
-
-      <div class="resume-empty">
-
-        <div class="resume-empty-title">
-          No resume uploaded
-        </div>
-
-        <div class="resume-empty-text">
-          Upload your resume to automatically attach it
-          to every email you send.
-        </div>
-
-
-        <label
-          for="resume"
-          class="btn btn-primary"
-        >
-          Upload Resume
-        </label>
-
-      </div>
-
-    {% endif %}
-
-  </form>
-
-</div>
-
-<!-- =====================================================
-     ADD RECRUITER
-     ===================================================== -->
-
-<div class="panel">
-
-  <h2>Add Recruiter</h2>
-
-
-  <!-- =================================================
-       ENTRY MODE BUTTONS
-       ================================================= -->
-
-  <div class="entry-mode">
-
-    <button
-      type="button"
-      id="manual-btn"
-      class="btn btn-primary"
-      onclick="showManual()"
-    >
-      Manual Entry
-    </button>
-
-
-    <button
-      type="button"
-      id="linkedin-btn"
-      class="btn btn-ghost"
-      onclick="showLinkedIn()"
-    >
-      Extract from LinkedIn
-    </button>
-
-  </div>
-
-
-  <!-- =================================================
-       MANUAL ENTRY
-       ================================================= -->
-
-  <div id="manual-entry">
-
-    <form
-      class="add-form"
-      method="POST"
-      action="{{ url_for('add') }}"
-    >
-
-
-      <!-- Recruiter Name -->
-
-      <div>
-
-        <label for="hr_name">
-          HR / Recruiter Name
-        </label>
-
-        <input
-          type="text"
-          id="hr_name"
-          name="hr_name"
-          placeholder="Priya Sharma"
-          value="{{ extracted.hr_name if extracted else '' }}"
-          required
-        >
-
-      </div>
-
-
-      <!-- Company -->
-
-      <div>
-
-        <label for="company">
-          Company
-        </label>
-
-        <input
-          type="text"
-          id="company"
-          name="company"
-          placeholder="Google"
-          value="{{ extracted.company if extracted else '' }}"
-          required
-        >
-
-      </div>
-
-
-      <!-- Job Role -->
-
-      <div>
-
-        <label for="job_role">
-          Job Role
-        </label>
-
-        <input
-          type="text"
-          id="job_role"
-          name="job_role"
-          placeholder="Data Scientist"
-          value="{{ extracted.job_role if extracted else '' }}"
-          required
-        >
-
-      </div>
-
-
-      <!-- Email -->
-
-      <div>
-
-        <label for="email">
-          Recruiter Email
-        </label>
-
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="priya@google.com"
-          value="{{ extracted.email if extracted else '' }}"
-          required
-        >
-
-      </div>
-
-
-      <!-- LinkedIn URL -->
-
-      <div class="full">
-
-        <label for="linkedin_url">
-          LinkedIn URL
-        </label>
-
-        <input
-          type="url"
-          id="linkedin_url"
-          name="linkedin_url"
-          placeholder="https://www.linkedin.com/jobs/..."
-          value="{{ extracted.linkedin_url if extracted and extracted.linkedin_url else '' }}"
-        >
-
-      </div>
-
-
-      <!-- Submit -->
-
-      <div class="full">
-
-        <button
-          type="submit"
-          class="btn btn-primary"
-        >
-          Add Recruiter
-        </button>
-
-      </div>
-
-    </form>
-
-  </div>
-
-
-  <!-- =================================================
-       LINKEDIN EXTRACTION
-       ================================================= -->
-
-  <div
-    id="linkedin-entry"
-    style="display: none;"
-  >
-
-    <p style="margin-bottom: 16px; color: #666;">
-      Paste a LinkedIn job post below. The agent will
-      automatically extract the recruiter name, company,
-      job role and email.
-    </p>
-
-
-    <form
-      method="POST"
-      action="{{ url_for('extract_linkedin') }}"
-    >
-
-
-      <!-- LinkedIn Post -->
-
-      <div class="full">
-
-        <label for="linkedin_post">
-          LinkedIn Job Post
-        </label>
-
-        <textarea
-          id="linkedin_post"
-          name="linkedin_post"
-          rows="12"
-          placeholder="Paste the complete LinkedIn job post here..."
-          required
-        >{{ extracted.linkedin_post if extracted else '' }}</textarea>
-
-      </div>
-
-
-      <!-- Extract -->
-
-      <div
-        class="full"
-        style="margin-top: 15px;"
-      >
-
-        <button
-          type="submit"
-          class="btn btn-primary"
-        >
-          Extract Recruiter Details
-        </button>
-
-      </div>
-
-    </form>
-
-  </div>
-
-</div>
-
-
-<!-- =====================================================
-     RECRUITER LIST
-     ===================================================== -->
-
-<div class="panel">
-
-  <h2>
-
-    Recruiter List —
-    {{ rows|length }}
-    row{{ 's' if rows|length != 1 else '' }}
-
-  </h2>
-
-
-  {% if rows %}
-
-
-  <table>
-
-    <thead>
-
-      <tr>
-
-        <th class="row-index">
-          #
-        </th>
-
-        <th>
-          HR Name
-        </th>
-
-        <th>
-          Company
-        </th>
-
-        <th>
-          Role
-        </th>
-
-        <th>
-          Email
-        </th>
-
-        <th>
-          Status
-        </th>
-
-        <th>
-          Actions
-        </th>
-
-      </tr>
-
-    </thead>
-
-
-    <tbody>
-
-      {% for row in rows %}
-
-      <tr>
-
-        <td class="row-index">
-          {{ row.index + 1 }}
-        </td>
-
-
-        <td>
-          {{ row.hr_name }}
-        </td>
-
-
-        <td>
-          {{ row.company }}
-        </td>
-
-
-        <td>
-          {{ row.job_role }}
-        </td>
-
-
-        <td>
-          {{ row.email }}
-        </td>
-
-
-        <td>
-
-          {% if row.status %}
-
-            <span class="badge {{ row.status }}">
-              {{ row.status }}
-            </span>
-
+        <form method="POST" action="{{ url_for('upload_resume') }}" enctype="multipart/form-data" class="resume-form">
+          <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" onchange="this.form.submit()" hidden>
+
+          {% if resume_path %}
+            <div class="resume-card-active">
+              <div class="resume-details">
+                <div class="resume-badge-icon">PDF</div>
+                <div class="resume-meta">
+                  <div class="resume-name" title="{{ resume_name }}">{{ resume_name }}</div>
+                  <div class="resume-status">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Ready to attach automatically
+                  </div>
+                </div>
+              </div>
+              <label for="resume" class="btn btn-ghost btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                Replace
+              </label>
+            </div>
           {% else %}
+            <div class="resume-empty">
+              <div class="resume-empty-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <div class="resume-empty-title">No Resume Uploaded</div>
+              <p class="resume-empty-text">Upload your resume to automatically customize and attach to every email outreach.</p>
+              <label for="resume" class="btn btn-primary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Upload Resume
+              </label>
+            </div>
+          {% endif %}
+        </form>
+      </div>
 
-            <span class="badge new">
-              NEW
-            </span>
+      <!-- Right Column: Add Recruiter Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7.5" r="4"></circle>
+              <line x1="20" y1="8" x2="20" y2="14"></line>
+              <line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
+            Add Target Recruiter
+          </h2>
 
+          <div class="segmented-control">
+            <button type="button" id="manual-btn" class="tab-btn active" onclick="showManual()">
+              Manual Entry
+            </button>
+            <button type="button" id="linkedin-btn" class="tab-btn" onclick="showLinkedIn()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                <rect x="2" y="9" width="4" height="12"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
+              AI Extract from LinkedIn
+            </button>
+          </div>
+        </div>
+
+        <!-- Manual Entry Form -->
+        <div id="manual-entry">
+          {% if extracted and extracted.hr_name or extracted and extracted.company or extracted and extracted.email or extracted and extracted.job_role %}
+            <div class="flash success" style="margin-bottom: 16px; padding: 10px 14px; font-size: 12px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <span>AI extraction complete! Review the populated details below and click "Save Recruiter to Pipeline".</span>
+            </div>
           {% endif %}
 
-        </td>
+          <form class="form-grid" method="POST" action="{{ url_for('add') }}">
+            <div class="form-group">
+              <label for="hr_name">HR / Recruiter Name <span class="req">*</span></label>
+              <input type="text" id="hr_name" name="hr_name" placeholder="Priya Sharma" value="{{ extracted.hr_name if extracted else '' }}" required>
+            </div>
 
+            <div class="form-group">
+              <label for="company">Company Name <span class="req">*</span></label>
+              <input type="text" id="company" name="company" placeholder="Google / Stripe" value="{{ extracted.company if extracted else '' }}" required>
+            </div>
 
-        <td class="actions">
+            <div class="form-group">
+              <label for="job_role">Target Job Role <span class="req">*</span></label>
+              <input type="text" id="job_role" name="job_role" placeholder="Senior Frontend Engineer" value="{{ extracted.job_role if extracted else '' }}" required>
+            </div>
 
-          <a
-            class="btn btn-ghost"
-            href="{{ url_for('preview', row_index=row.index) }}"
-          >
-            Preview
-          </a>
+            <div class="form-group">
+              <label for="email">Recruiter Email <span class="req">*</span></label>
+              <input type="email" id="email" name="email" placeholder="priya@company.com" value="{{ extracted.email if extracted else '' }}" required>
+            </div>
 
+            <div class="form-group full">
+              <label for="linkedin_url">LinkedIn Profile or Job URL <span style="text-transform:none; font-weight:normal; color:var(--text-muted);">(optional)</span></label>
+              <input type="url" id="linkedin_url" name="linkedin_url" placeholder="https://www.linkedin.com/in/..." value="{{ extracted.linkedin_url if extracted and extracted.linkedin_url else '' }}">
+            </div>
 
-          <form
-            method="POST"
-            action="{{ url_for('delete', row_index=row.index) }}"
-            onsubmit="return confirm('Remove this recruiter from the list?');"
-          >
-
-            <button
-              type="submit"
-              class="btn btn-danger"
-            >
-              Delete
-            </button>
-
+            <div class="full" style="margin-top: 4px;">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Save Recruiter to Pipeline
+              </button>
+            </div>
           </form>
+        </div>
 
-        </td>
+        <!-- LinkedIn Extraction Form -->
+        <div id="linkedin-entry" style="display: none;">
+          <p class="hint-text">
+            Paste the raw text of a LinkedIn job description or recruiter posting. ApplyPilot's agent will parse recruiter name, company, target role, and work email automatically, then bring you directly to the manual form to save.
+          </p>
 
-      </tr>
+          <form method="POST" action="{{ url_for('extract_linkedin') }}">
+            <div class="form-group full">
+              <label for="linkedin_post">LinkedIn Job Post Raw Text <span class="req">*</span></label>
+              <textarea id="linkedin_post" name="linkedin_post" rows="7" placeholder="Paste the job description or post here..." required>{{ extracted.linkedin_post if extracted else '' }}</textarea>
+            </div>
 
-      {% endfor %}
+            <div class="full" style="margin-top: 14px;">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                </svg>
+                Extract Recruiter Details via AI
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
-    </tbody>
+    <!-- =====================================================
+         RECRUITER OUTREACH QUEUE
+         ===================================================== -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          Recruiter Outreach Queue
+          <span style="font-weight:400; color:var(--text-muted); font-size:12px; margin-left:6px;">
+            ({{ rows|length }} recruiter{{ 's' if rows|length != 1 else '' }} in current batch)
+          </span>
+        </h2>
+        <span class="panel-header-badge">Auto-deduplication active</span>
+      </div>
 
-  </table>
+      {% if rows %}
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th class="cell-index">#</th>
+                <th>Recruiter / HR</th>
+                <th>Company</th>
+                <th>Target Role</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr>
+                  <td class="cell-index">{{ "%02d"|format(row.index + 1) }}</td>
+                  <td>
+                    <div class="cell-name">
+                      <div class="avatar-circle">
+                        {{ row.hr_name[0] if row.hr_name else 'R' }}
+                      </div>
+                      <span>{{ row.hr_name }}</span>
+                    </div>
+                  </td>
+                  <td class="cell-company">
+                    <span class="company-pill">{{ row.company }}</span>
+                  </td>
+                  <td class="cell-role">{{ row.job_role }}</td>
+                  <td class="cell-email">{{ row.email }}</td>
+                  <td>
+                    {% if row.status == 'SENT' %}
+                      <span class="badge SENT">Sent</span>
+                    {% elif row.status == 'FAILED' %}
+                      <span class="badge FAILED">Failed</span>
+                    {% elif row.status == 'SKIPPED' %}
+                      <span class="badge SKIPPED">Skipped</span>
+                    {% else %}
+                      <span class="badge new">New</span>
+                    {% endif %}
+                  </td>
+                  <td style="text-align: right;">
+                    <div class="actions-group" style="justify-content: flex-end;">
+                      <a class="btn btn-ghost btn-sm" href="{{ url_for('preview', row_index=row.index) }}">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        Preview &amp; Send
+                      </a>
+                      <form method="POST" action="{{ url_for('delete', row_index=row.index) }}" onsubmit="return confirm('Remove this recruiter from your outreach queue?');" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" title="Delete record">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <div style="font-weight:600; color:var(--text-primary); margin-bottom:4px;">No recruiters added yet</div>
+          <p>Add recruiters manually or paste a LinkedIn job post above to begin personalized AI cold outreach.</p>
+        </div>
+      {% endif %}
+    </div>
 
-
-  {% else %}
-
-
-  <div class="empty-state">
-
-    No recruiters added yet. Use the form above to add your
-    first one.
-
-  </div>
-
-
-  {% endif %}
-
-</div>
-```
-
+    <div class="footer-credits">
+      ApplyPilot Engine &bull; Automated personalized recruiter cold email agent &bull; Built with Flask &amp; Tailwind CSS
+    </div>
   </div>
 
   <!-- =====================================================
-       JAVASCRIPT
+       JAVASCRIPT FOR TABS & AUTO-FOCUS ON EXTRACTION
        ===================================================== -->
-
   <script>
+  function showManual() {
+    document.getElementById("manual-entry").style.display = "block";
+    document.getElementById("linkedin-entry").style.display = "none";
+    document.getElementById("manual-btn").classList.add("active");
+    document.getElementById("linkedin-btn").classList.remove("active");
+  }
 
-    function showManual() {
+  function showLinkedIn() {
+    document.getElementById("manual-entry").style.display = "none";
+    document.getElementById("linkedin-entry").style.display = "block";
+    document.getElementById("linkedin-btn").classList.add("active");
+    document.getElementById("manual-btn").classList.remove("active");
+  }
 
-      document.getElementById("manual-entry").style.display = "block";
-
-      document.getElementById("linkedin-entry").style.display = "none";
-
-      document.getElementById("manual-btn").classList.add("btn-primary");
-
-      document.getElementById("manual-btn").classList.remove("btn-ghost");
-
-      document.getElementById("linkedin-btn").classList.add("btn-ghost");
-
-      document.getElementById("linkedin-btn").classList.remove("btn-primary");
-
-    }
-
-
-    function showLinkedIn() {
-
-      document.getElementById("manual-entry").style.display = "none";
-
-      document.getElementById("linkedin-entry").style.display = "block";
-
-      document.getElementById("linkedin-btn").classList.add("btn-primary");
-
-      document.getElementById("linkedin-btn").classList.remove("btn-ghost");
-
-      document.getElementById("manual-btn").classList.add("btn-ghost");
-
-      document.getElementById("manual-btn").classList.remove("btn-primary");
-
-    }
-
-
-    /*
-     * If Flask returned extracted recruiter details,
-     * automatically show the Manual Entry form.
-     *
-     * This means:
-     *
-     * LinkedIn Post
-     *      ↓
-     * Extract
-     *      ↓
-     * Manual Entry opens with populated fields
-     */
-
-// Show Manual Entry by default
-    showManual();
-  </script>
-
+  // Default to Manual Entry when the page loads.
+  showManual();
+</script>
 </body>
-
 </html>
