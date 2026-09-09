@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 import re
 
-from mlx_lm import load, generate
-from pydantic import BaseModel, ConfigDict, Field
+from mlx_lm import load, generate # type: ignore
+from pydantic import BaseModel, ConfigDict, Field # type: ignore
 
 
 # ============================================================

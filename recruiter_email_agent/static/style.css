@@ -12,7 +12,7 @@
   --bg-card-hover: rgba(24, 32, 50, 0.85);
   --bg-elevated: #151D2E;
   --bg-subtle: rgba(255, 255, 255, 0.03);
-  
+
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-focus: #3B82F6;
   --border-card: rgba(255, 255, 255, 0.07);
@@ -20,7 +20,7 @@
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
-  
+
   --accent-blue: #3B82F6;
   --accent-cyan: #06B6D4;
   --accent-purple: #6366F1;
@@ -60,7 +60,7 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-pill: 9999px;
-  
+
   --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px var(--border-card);
   --shadow-glow: 0 0 25px -5px rgba(59, 130, 246, 0.3);
 }
@@ -73,7 +73,7 @@
 
 body {
   background-color: var(--bg-main);
-  background-image: 
+  background-image:
     radial-gradient(ellipse 70% 40% at 50% -20%, rgba(59, 130, 246, 0.15), transparent 70%),
     radial-gradient(ellipse 50% 30% at 85% 60%, rgba(99, 102, 241, 0.08), transparent 60%);
   background-attachment: fixed;
@@ -155,6 +155,7 @@ header.masthead {
 .title span {
   background: var(--accent-gradient);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -220,8 +221,14 @@ header.masthead {
   background: var(--text-muted);
 }
 
-.stat-card.sent .stat-label-dot { background: var(--status-sent); box-shadow: 0 0 8px var(--status-sent); }
-.stat-card.failed .stat-label-dot { background: var(--status-failed); }
+.stat-card.sent .stat-label-dot {
+  background: var(--status-sent);
+  box-shadow: 0 0 8px var(--status-sent);
+}
+
+.stat-card.failed .stat-label-dot {
+  background: var(--status-failed);
+}
 
 .stat-value {
   font-size: 22px;
@@ -231,8 +238,13 @@ header.masthead {
   margin-top: 2px;
 }
 
-.stat-card.sent .stat-value { color: #34D399; }
-.stat-card.failed .stat-value { color: #F87171; }
+.stat-card.sent .stat-value {
+  color: #34D399;
+}
+
+.stat-card.failed .stat-value {
+  color: #F87171;
+}
 
 /* ==========================================================================
    Flash Messages
@@ -251,8 +263,15 @@ header.masthead {
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .flash.success {
@@ -727,17 +746,47 @@ tr:hover td {
   border-radius: 50%;
 }
 
-.badge.SENT { background: var(--status-sent-bg); color: var(--status-sent); border: 1px solid var(--status-sent-border); }
-.badge.SENT::before { background: var(--status-sent); }
+.badge.SENT {
+  background: var(--status-sent-bg);
+  color: var(--status-sent);
+  border: 1px solid var(--status-sent-border);
+}
 
-.badge.FAILED { background: var(--status-failed-bg); color: var(--status-failed); border: 1px solid var(--status-failed-border); }
-.badge.FAILED::before { background: var(--status-failed); }
+.badge.SENT::before {
+  background: var(--status-sent);
+}
 
-.badge.SKIPPED { background: var(--status-skipped-bg); color: var(--status-skipped); border: 1px solid var(--status-skipped-border); }
-.badge.SKIPPED::before { background: var(--status-skipped); }
+.badge.FAILED {
+  background: var(--status-failed-bg);
+  color: var(--status-failed);
+  border: 1px solid var(--status-failed-border);
+}
 
-.badge.PENDING, .badge.new { background: var(--status-new-bg); color: var(--status-new); border: 1px solid var(--status-new-border); }
-.badge.PENDING::before, .badge.new::before { background: var(--status-new); }
+.badge.FAILED::before {
+  background: var(--status-failed);
+}
+
+.badge.SKIPPED {
+  background: var(--status-skipped-bg);
+  color: var(--status-skipped);
+  border: 1px solid var(--status-skipped-border);
+}
+
+.badge.SKIPPED::before {
+  background: var(--status-skipped);
+}
+
+.badge.PENDING,
+.badge.new {
+  background: var(--status-new-bg);
+  color: var(--status-new);
+  border: 1px solid var(--status-new-border);
+}
+
+.badge.PENDING::before,
+.badge.new::before {
+  background: var(--status-new);
+}
 
 .actions-group {
   display: flex;
